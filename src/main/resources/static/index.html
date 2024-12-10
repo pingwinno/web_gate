@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+        }
+
+        .slidecontainer {
+            width: 100%;
+        }
+
+        .slider {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 25px;
+            background: #d3d3d3;
+            outline: none;
+            opacity: 0.7;
+            -webkit-transition: .2s;
+            transition: opacity .2s;
+        }
+
+        .slider:hover {
+            opacity: 1;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 25px;
+            height: 25px;
+            background: #04AA6D;
+            cursor: pointer;
+        }
+
+        .slider::-moz-range-thumb {
+            width: 25px;
+            height: 25px;
+            background: #04AA6D;
+            cursor: pointer;
+        }
+
+        .toggle {
+            position: relative;
+            display: inline-block;
+            width: 100px;
+            height: 52px;
+            background-color: red;
+            border-radius: 30px;
+            border: 2px solid gray;
+        }
+
+        /* After slide changes */
+        .toggle:after {
+            content: '';
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background-color: gray;
+            top: 1px;
+            left: 1px;
+            transition: all 0.5s;
+        }
+
+        /* Toggle text */
+        p {
+            font-family: Arial, Helvetica, sans-serif;
+            font-weight: bold;
+        }
+
+        /* Checkbox checked effect */
+        .checkbox:checked + .toggle::after {
+            left: 49px;
+        }
+
+        /* General body styling for dark theme */
+        body {
+            background-color: #121212; /* Dark background */
+            color: #ffffff; /* Light text */
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        /* Switch styling */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+        }
+
+        /* Slider container for range sliders */
+        .slidecontainer {
+            width: 100%;
+        }
+
+        /* Slider styling */
+        .slider {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 25px;
+            background: #333; /* Darker background */
+            outline: none;
+            opacity: 0.8;
+            -webkit-transition: .2s;
+            transition: opacity .2s;
+        }
+
+        .slider:hover {
+            opacity: 1;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 25px;
+            height: 25px;
+            background: #1DB954; /* Bright green thumb */
+            cursor: pointer;
+        }
+
+        .slider::-moz-range-thumb {
+            width: 25px;
+            height: 25px;
+            background: #1DB954; /* Bright green thumb */
+            cursor: pointer;
+        }
+
+        /* Toggle switch */
+        .toggle {
+            position: relative;
+            display: inline-block;
+            width: 100px;
+            height: 52px;
+            background-color: #444; /* Darker toggle background */
+            border-radius: 30px;
+            border: 2px solid #666;
+        }
+
+        /* After slide changes */
+        .toggle:after {
+            content: '';
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background-color: #999; /* Lighter gray thumb */
+            top: 1px;
+            left: 1px;
+            transition: all 0.5s;
+        }
+
+        /* Checkbox checked effect */
+        .checkbox:checked + .toggle::after {
+            left: 49px;
+        }
+
+        /* Checkbox checked toggle label background color */
+        .checkbox:checked + .toggle {
+            background-color: #1DB954; /* Bright green */
+        }
+
+        /* Checkbox hidden */
+        .checkbox {
+            display: none;
+        }
+
+        /* Accordion buttons */
+        .accordion {
+            background-color: #333; /* Darker background */
+            color: #ffffff; /* Light text */
+            cursor: pointer;
+            padding: 18px;
+            width: 100%;
+            text-align: left;
+            border: none;
+            outline: none;
+            transition: 0.4s;
+        }
+
+        /* Accordion hover and active styles */
+        .active, .accordion:hover {
+            background-color: #444; /* Slightly lighter on hover */
+        }
+
+        /* Accordion panel */
+        .panel {
+            padding: 0 18px;
+            background-color: #222; /* Darker panel background */
+            display: none;
+            overflow: hidden;
+        }
+
+        /* Button styling */
+        .btn {
+            border: none;
+            background-color: #333; /* Dark button background */
+            padding: 14px 28px;
+            font-size: 16px;
+            cursor: pointer;
+            color: #ffffff; /* Light text */
+            display: inline-block;
+        }
+
+        .selected {
+            background-color: #1DB954; /* Bright green for selected */
+            color: #ffffff;
+        }
+
+        .info:hover {
+            background: #1E90FF; /* Bright blue on hover */
+            color: white;
+        }
+
+        /* Gray inactive buttons */
+        .inactive {
+            background: #555; /* Darker gray for inactive */
+            color: #bbb; /* Lighter text for inactive */
+        }
+
+    </style>
+</head>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.2/sockjs.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+<script type="text/javascript">
+    window.onload = function () {
+        let stompClient = null;
+
+        function connect() {
+            const socket = new SockJS('/ws');
+            stompClient = Stomp.over(socket);
+
+            stompClient.connect({}, (frame) => {
+                console.log('Connected: ' + frame);
+                stompClient.subscribe('/speaker/settings', (message) => {
+                    handleIncomingMessage(JSON.parse(message.body));
+                });
+            }, (error) => {
+                console.error('Error connecting: ', error);
+                setTimeout(connect, 1000);
+            });
+        }
+
+        function sendMessage(msg) {
+            if (stompClient && stompClient.connected) {
+                stompClient.send("/app/set", {}, JSON.stringify(msg));
+            } else {
+                console.error('Cannot send message. STOMP client is not connected.');
+            }
+        }
+
+        function handleIncomingMessage(msg) {
+            localStorage.clear();
+            console.log(msg);
+
+            document.getElementById("enabled").checked = msg.state;
+            hideSettings(msg.state);
+            document.getElementById("volume").value = msg.volume;
+            updateSelectedInput(msg.input);
+            document.getElementById("sw").value = msg.sw;
+            document.getElementById("bass").value = msg.bass;
+            document.getElementById("treble").value = msg.treble;
+            document.getElementById("balance").value = msg.balance;
+        }
+
+        function updateSelectedInput(input) {
+            const buttons = ["pc", "cd", "digital"];
+            buttons.forEach((btnId, index) => {
+                document.getElementById(btnId).className = index === input ? "btn selected" : "btn inactive";
+            });
+        }
+
+        function hideSettings(isEnabled) {
+            document.getElementById("settingsBlock").hidden = !isEnabled;
+        }
+
+        // Event Listeners
+        document.getElementById("enabled").addEventListener("input", function () {
+            sendMessage({type: "state", value: Number(this.checked)});
+        });
+
+        document.getElementById("volume").addEventListener("input", function () {
+            sendMessage({type: "volume", value: Number(this.value)});
+        });
+
+        document.getElementById("sw").addEventListener("input", function () {
+            sendMessage({type: "sw", value: Number(this.value)});
+        });
+
+        document.getElementById("bass").addEventListener("input", function () {
+            sendMessage({type: "bass", value: Number(this.value)});
+        });
+
+        document.getElementById("treble").addEventListener("input", function () {
+            sendMessage({type: "treble", value: Number(this.value)});
+        });
+
+        document.getElementById("balance").addEventListener("input", function () {
+            sendMessage({type: "balance", value: Number(this.value)});
+        });
+
+        document.getElementById("pc").addEventListener("click", function () {
+            sendMessage({type: "input", value: 0});
+        });
+
+        document.getElementById("cd").addEventListener("click", function () {
+            sendMessage({type: "input", value: 1});
+        });
+
+        document.getElementById("digital").addEventListener("click", function () {
+            sendMessage({type: "input", value: 2});
+        });
+
+
+        const acc = document.getElementsByClassName("accordion");
+        for (let i = 0; i < acc.length; i++) {
+            acc[i].addEventListener("click", function () {
+                this.classList.toggle("active");
+                const panel = this.nextElementSibling;
+                if (panel.style.display === "block") {
+                    panel.style.display = "none";
+                } else {
+                    panel.style.display = "block";
+                }
+            });
+        }
+        // Connect on load
+        connect();
+    }
+</script>
+<body>
+<p class="error_message" id="error_message"></p>
+<div id="controls">
+    <h1>Speaker control</h1>
+    <button class="btn selected" id="pc" value=0>PC</button>
+    <button class="btn inactive" id="cd" value=1>CD</button>
+    <button class="btn inactive" id="digital" value=2>DIGITAL</button>
+
+    <p>enabled:</p>
+    <input type="checkbox" id="enabled" class="checkbox"/>
+    <label for="enabled" class="toggle"></label>
+
+    <div class="slidecontainer" id="settingsBlock">
+        <p>volume:</p>
+        <input type="range" min=1 max=56 value=1 class="slider" id="volume">
+        <button class="accordion">Additional settings</button>
+        <div class="panel">
+            <p>sw:</p>
+            <input type="range" min=0 max=15 value=10 class="slider" id="sw">
+            <p>bass:</p>
+            <input type="range" min=-10 max=10 value=0 class="slider" id="bass">
+            <p>treble:</p>
+            <input type="range" min=-10 max=10 value=0 class="slider" id="treble">
+            <p>balance:</p>
+            <input type="range" min=-10 max=10 value=0 class="slider" id="balance">
+        </div>
+    </div>
+</div>
+</body>
+</html>
