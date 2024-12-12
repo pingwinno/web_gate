@@ -28,7 +28,10 @@ jobs:
       # Build the Docker image
       - name: Build Docker image
         run: |
-          docker build -t ghcr.io/${{ github.repository }}/speaker-web-gate:latest .
+          docker buildx build \
+            --platform linux/amd64,linux/arm64,linux/arm/v7 \
+            -t ghcr.io/${{ github.repository }}/speaker-web-gate:latest \
+            --push .
 
       # Push the Docker image to GHCR
       - name: Push Docker image
