@@ -1,4 +1,4 @@
-FROM bellsoft/liberica-openjdk-alpine-musl:17
+FROM amazoncorretto:17
 
 COPY . /tmp
 RUN mkdir /opt/app
