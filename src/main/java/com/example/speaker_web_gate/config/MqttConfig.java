@@ -1,5 +1,6 @@
 package com.example.speaker_web_gate.config;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.integration.dsl.IntegrationFlow;
@@ -10,12 +11,16 @@ import org.springframework.integration.mqtt.outbound.Mqttv5PahoMessageHandler;
 @Configuration
 public class MqttConfig {
 
-    private static final String MQTT_URL = "tcp://localhost:1883";
+    @Value("${mqtt.url}")
+    private String mqttHost;
+
+    @Value("${mqtt.port}")
+    private int mqttPort;
 
 
     @Bean
     public IntegrationFlow mqttOutFlow() {
-        Mqttv5PahoMessageHandler messageHandler = new Mqttv5PahoMessageHandler(MQTT_URL, "web_gate");
+        Mqttv5PahoMessageHandler messageHandler = new Mqttv5PahoMessageHandler("tcp://" + mqttHost + ":" + mqttPort, "web_gate_out");
         messageHandler.setAsync(true);
         messageHandler.setAsyncEvents(true);
         return f -> f
@@ -26,7 +31,7 @@ public class MqttConfig {
     @Bean
     public IntegrationFlow mqttInFlow() {
         Mqttv5PahoMessageDrivenChannelAdapter messageProducer =
-                new Mqttv5PahoMessageDrivenChannelAdapter(MQTT_URL, "web_gate", "/settings");
+                new Mqttv5PahoMessageDrivenChannelAdapter("tcp://" + mqttHost + ":" + mqttPort, "web_gate_in", "/settings");
         messageProducer.setPayloadType(byte[].class);
         return IntegrationFlow.from(messageProducer)
                 .channel(c -> c.queue("mqttFlow.input"))

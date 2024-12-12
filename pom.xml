@@ -10,7 +10,7 @@
     </parent>
     <groupId>com.example</groupId>
     <artifactId>speaker_web_gate</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>RELEASE</version>
     <name>speaker_web_gate</name>
     <description>speaker_web_gate</description>
     <url/>
