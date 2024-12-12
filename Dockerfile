@@ -1,4 +1,4 @@
-FROM amazoncorretto:17
+FROM openjdk:24-ea-17-jdk-bookworm
 
 COPY . /tmp
 RUN mkdir /opt/app
