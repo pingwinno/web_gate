@@ -1,23 +1,35 @@
 package com.example.speaker_web_gate.config;
 
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.messaging.simp.config.MessageBrokerRegistry;
-import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
-import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
-import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
+import org.springframework.integration.dsl.IntegrationFlow;
+import org.springframework.integration.websocket.ServerWebSocketContainer;
+import org.springframework.integration.websocket.inbound.WebSocketInboundChannelAdapter;
+import org.springframework.integration.websocket.outbound.WebSocketOutboundMessageHandler;
 
 @Configuration
-@EnableWebSocketMessageBroker
-public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
+public class WebSocketConfig {
 
-    @Override
-    public void registerStompEndpoints(StompEndpointRegistry registry) {
-        registry.addEndpoint("/ws").withSockJS();
+    @Bean
+    ServerWebSocketContainer serverWebSocketContainer() {
+        return new ServerWebSocketContainer("/ws");
     }
 
-    @Override
-    public void configureMessageBroker(MessageBrokerRegistry registry) {
-        registry.setApplicationDestinationPrefixes("/app");
-        registry.enableSimpleBroker("/speaker");
+    @Bean
+    IntegrationFlow webSocketOutFlow() {
+        var webSocketOutboundMessageHandler = new WebSocketOutboundMessageHandler(serverWebSocketContainer());
+        return flow -> flow
+                .channel("webSocketFlow.output")
+                .handle(webSocketOutboundMessageHandler);
+    }
+
+
+    @Bean
+    IntegrationFlow webSocketInFlow() {
+        WebSocketInboundChannelAdapter adapter = new WebSocketInboundChannelAdapter(serverWebSocketContainer());
+        return IntegrationFlow.from(adapter)
+                .channel("webSocketFlow.input")
+                .get();
+
     }
 }

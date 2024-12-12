@@ -225,32 +225,36 @@
 
     </style>
 </head>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.2/sockjs.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
 <script type="text/javascript">
     window.onload = function () {
-        let stompClient = null;
+        let websocket = null;
 
         function connect() {
-            const socket = new SockJS('/ws');
-            stompClient = Stomp.over(socket);
+            websocket = new WebSocket(window.location + "ws");
 
-            stompClient.connect({}, (frame) => {
-                console.log('Connected: ' + frame);
-                stompClient.subscribe('/speaker/settings', (message) => {
-                    handleIncomingMessage(JSON.parse(message.body));
-                });
-            }, (error) => {
-                console.error('Error connecting: ', error);
+            websocket.onopen = function () {
+                console.log('WebSocket connection established.');
+            };
+
+            websocket.onmessage = function (event) {
+                handleIncomingMessage(JSON.parse(event.data));
+            };
+
+            websocket.onerror = function (error) {
+                console.error('WebSocket error: ', error);
+            };
+
+            websocket.onclose = function () {
+                console.log('WebSocket connection closed. Reconnecting in 1 second...');
                 setTimeout(connect, 1000);
-            });
+            };
         }
 
         function sendMessage(msg) {
-            if (stompClient && stompClient.connected) {
-                stompClient.send("/app/set", {}, JSON.stringify(msg));
+            if (websocket && websocket.readyState === WebSocket.OPEN) {
+                websocket.send(JSON.stringify(msg));
             } else {
-                console.error('Cannot send message. STOMP client is not connected.');
+                console.error('Cannot send message. WebSocket is not connected.');
             }
         }
 
@@ -316,7 +320,6 @@
             sendMessage({type: "input", value: 2});
         });
 
-
         const acc = document.getElementsByClassName("accordion");
         for (let i = 0; i < acc.length; i++) {
             acc[i].addEventListener("click", function () {
@@ -329,6 +332,7 @@
                 }
             });
         }
+
         // Connect on load
         connect();
     }
@@ -348,7 +352,7 @@
     <div class="slidecontainer" id="settingsBlock">
         <p>volume:</p>
         <input type="range" min=1 max=56 value=1 class="slider" id="volume">
-        <button class="accordion">Additional settings</button>
+        <button class="accordion">Additional speakerSettings</button>
         <div class="panel">
             <p>sw:</p>
             <input type="range" min=0 max=15 value=10 class="slider" id="sw">
