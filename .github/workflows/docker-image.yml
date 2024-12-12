@@ -25,6 +25,12 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+
+      # Install QEMU for multi-platform builds
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+
+
       # Build the Docker image
       - name: Build Docker image
         run: |
