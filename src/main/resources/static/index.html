@@ -234,7 +234,6 @@
 
             websocket.onopen = function () {
                 console.log('WebSocket connection established.');
-                sendMessage({type: "get", value: Number(0)});
             };
 
             websocket.onmessage = function (event) {

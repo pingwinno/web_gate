@@ -1,5 +1,7 @@
 package com.example.speaker_web_gate.service;
 
+import com.example.speaker_web_gate.event.SessionEvent;
+import com.example.speaker_web_gate.event.SpeakerParameterEvent;
 import com.example.speaker_web_gate.gateway.WebsocketGateway;
 import com.example.speaker_web_gate.model.SpeakerParameter;
 import com.example.speaker_web_gate.model.SpeakerSettings;
@@ -9,7 +11,6 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.event.EventListener;
 import org.springframework.integration.annotation.ServiceActivator;
 import org.springframework.messaging.Message;
-import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
 import org.springframework.stereotype.Service;
 
 import java.util.Set;
@@ -30,7 +31,6 @@ public class SpeakerSettingsService {
         log.info("Received settings update: {}", message);
         log.info("Setting is : {}", message.getPayload());
         sendSpeakerParameterEvent(message.getPayload());
-        ids.add(message.getHeaders().get(SimpMessageHeaderAccessor.SESSION_ID_HEADER, String.class));
     }
 
     @EventListener
@@ -46,8 +46,19 @@ public class SpeakerSettingsService {
         });
     }
 
+    @EventListener(SessionEvent.class)
+    public void sentSpeakerParameterUpdate(SessionEvent sessionEvent) {
+        log.info("Session id {} is closed: {}", sessionEvent.getSessionId(), sessionEvent.isClosed());
+        if (sessionEvent.isClosed()) {
+            ids.remove(sessionEvent.getSessionId());
+        } else {
+            ids.add(sessionEvent.getSessionId());
+        }
+    }
+
     public void sendSpeakerParameterEvent(SpeakerParameter speakerParameter) {
         log.info("Sending settings event: {}", speakerParameter);
-        applicationEventPublisher.publishEvent(speakerParameter);
+        var event = new SpeakerParameterEvent(this, speakerParameter);
+        applicationEventPublisher.publishEvent(event);
     }
 }

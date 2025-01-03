@@ -1,7 +1,7 @@
 package com.example.speaker_web_gate.service;
 
+import com.example.speaker_web_gate.event.SpeakerParameterEvent;
 import com.example.speaker_web_gate.gateway.MqttGateway;
-import com.example.speaker_web_gate.model.SpeakerParameter;
 import com.example.speaker_web_gate.model.SpeakerSettings;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,9 +25,10 @@ public class MqttService {
         sentSpeakerParameterEvent(message.getPayload());
     }
 
-    @EventListener
-    public void sentSpeakerParameterUpdate(SpeakerParameter speakerParameter) {
-        mqttGateway.sendMessage("/" + speakerParameter.getType().toString().toLowerCase(), 2, Integer.toString(speakerParameter.getValue()));
+    @EventListener(SpeakerParameterEvent.class)
+    public void sentSpeakerParameterUpdate(SpeakerParameterEvent speakerParameter) {
+        log.info("Sending settings event to mqtt: {}", speakerParameter.getSpeakerParameter());
+        mqttGateway.sendMessage("/" + speakerParameter.getSpeakerParameter().getType().toString().toLowerCase(), 2, Integer.toString(speakerParameter.getSpeakerParameter().getValue()));
     }
 
     private void sentSpeakerParameterEvent(SpeakerSettings speakerSettings) {
