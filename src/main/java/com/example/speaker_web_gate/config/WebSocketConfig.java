@@ -15,18 +15,20 @@ import org.springframework.integration.websocket.outbound.WebSocketOutboundMessa
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.WebSocketSession;
+import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
 
 @Configuration
 @RequiredArgsConstructor
 @Component
-public class WebSocketConfig {
+public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     private final ApplicationEventPublisher applicationEventPublisher;
 
 
     @Bean
     ServerWebSocketContainer serverWebSocketContainer() {
-        return new ServerWebSocketContainer("/ws");
+        return new ServerWebSocketContainer("/ws")
+                .setAllowedOrigins("*");
     }
 
     @Bean
@@ -36,7 +38,6 @@ public class WebSocketConfig {
                 .channel("webSocketFlow.output")
                 .handle(webSocketOutboundMessageHandler);
     }
-
 
     @Bean
     IntegrationFlow webSocketInFlow() {
